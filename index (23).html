@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SalonPostPro | 美容師のInstagram自動投稿サービス</title>
+  <meta name="description" content="LINEで写真を送るだけ。AIがキャプションを生成してInstagramに自動投稿。美容師個人向けのSNS運用サービス。">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f0f0f;
+      --surface: #181818;
+      --surface2: #222222;
+      --ink: #f0ece6;
+      --ink-muted: #888;
+      --accent: #c8a97e;
+      --accent2: #e8d5b8;
+      --rule: #2a2a2a;
+      --sans: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--sans);
+      font-size: 15px;
+      line-height: 1.8;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ===== HEADER ===== */
+    header {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      padding: 20px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(15,15,15,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--rule);
+    }
+
+    .logo {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: var(--ink);
+      text-decoration: none;
+    }
+
+    .logo span { color: var(--accent); }
+
+    nav { display: flex; gap: 32px; align-items: center; }
+
+    nav a {
+      color: var(--ink-muted);
+      text-decoration: none;
+      font-size: 13px;
+      letter-spacing: 0.04em;
+      transition: color 0.2s;
+    }
+
+    nav a:hover { color: var(--ink); }
+
+    .nav-cta {
+      background: var(--accent);
+      color: #0f0f0f !important;
+      padding: 10px 20px;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 13px !important;
+    }
+
+    /* ===== HERO ===== */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 120px 24px 80px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -200px; left: 50%;
+      transform: translateX(-50%);
+      width: 600px; height: 600px;
+      background: radial-gradient(ellipse, rgba(200,169,126,0.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero-badge {
+      display: inline-block;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      padding: 6px 16px;
+      border-radius: 2px;
+      margin-bottom: 36px;
+    }
+
+    .hero h1 {
+      font-size: clamp(36px, 6vw, 68px);
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      line-height: 1.1;
+      margin-bottom: 28px;
+    }
+
+    .hero h1 em {
+      font-style: normal;
+      color: var(--accent);
+    }
+
+    .hero-sub {
+      font-size: clamp(15px, 2vw, 18px);
+      color: var(--ink-muted);
+      max-width: 520px;
+      line-height: 1.7;
+      margin-bottom: 48px;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #0f0f0f;
+      padding: 16px 36px;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 15px;
+      text-decoration: none;
+      transition: opacity 0.2s;
+    }
+
+    .btn-primary:hover { opacity: 0.85; }
+
+    .btn-secondary {
+      border: 1px solid var(--rule);
+      color: var(--ink);
+      padding: 16px 36px;
+      border-radius: 4px;
+      font-size: 15px;
+      text-decoration: none;
+      transition: border-color 0.2s;
+    }
+
+    .btn-secondary:hover { border-color: var(--ink-muted); }
+
+    /* ===== HOW IT WORKS ===== */
+    section { padding: 96px 24px; }
+
+    .section-label {
+      text-align: center;
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 20px;
+    }
+
+    .section-title {
+      text-align: center;
+      font-size: clamp(26px, 4vw, 40px);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      margin-bottom: 64px;
+    }
+
+    .steps {
+      max-width: 900px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 2px;
+    }
+
+    .step {
+      background: var(--surface);
+      padding: 40px 32px;
+      position: relative;
+    }
+
+    .step-num {
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      margin-bottom: 20px;
+      font-weight: 700;
+    }
+
+    .step-icon {
+      font-size: 36px;
+      margin-bottom: 20px;
+      display: block;
+    }
+
+    .step h3 {
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 10px;
+    }
+
+    .step p {
+      font-size: 13px;
+      color: var(--ink-muted);
+      line-height: 1.7;
+    }
+
+    /* ===== FEATURES ===== */
+    .features-section { background: var(--surface); }
+
+    .features-grid {
+      max-width: 960px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1px;
+      background: var(--rule);
+    }
+
+    .feature {
+      background: var(--surface);
+      padding: 40px 36px;
+    }
+
+    .feature-icon {
+      font-size: 28px;
+      margin-bottom: 20px;
+      display: block;
+    }
+
+    .feature h3 {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 10px;
+      letter-spacing: -0.01em;
+    }
+
+    .feature p {
+      font-size: 13px;
+      color: var(--ink-muted);
+      line-height: 1.7;
+    }
+
+    /* ===== PRICING ===== */
+    .pricing-grid {
+      max-width: 1000px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+    }
+
+    .plan {
+      background: var(--surface);
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      padding: 36px 28px;
+      position: relative;
+    }
+
+    .plan.featured {
+      border-color: var(--accent);
+      background: var(--surface2);
+    }
+
+    .plan-badge {
+      position: absolute;
+      top: -12px; left: 50%;
+      transform: translateX(-50%);
+      background: var(--accent);
+      color: #0f0f0f;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 4px 14px;
+      border-radius: 2px;
+      white-space: nowrap;
+    }
+
+    .plan-name {
+      font-size: 12px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+      margin-bottom: 16px;
+    }
+
+    .plan-price {
+      font-size: 36px;
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      margin-bottom: 4px;
+      color: var(--ink);
+    }
+
+    .plan-price span {
+      font-size: 14px;
+      font-weight: 400;
+      color: var(--ink-muted);
+    }
+
+    .plan-desc {
+      font-size: 12px;
+      color: var(--ink-muted);
+      margin-bottom: 28px;
+      line-height: 1.6;
+      min-height: 40px;
+    }
+
+    .plan-features {
+      list-style: none;
+      margin-bottom: 32px;
+    }
+
+    .plan-features li {
+      font-size: 13px;
+      color: var(--ink-muted);
+      padding: 8px 0;
+      border-bottom: 1px solid var(--rule);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .plan-features li::before {
+      content: '✓';
+      color: var(--accent);
+      font-size: 12px;
+      flex-shrink: 0;
+    }
+
+    .plan-cta {
+      display: block;
+      text-align: center;
+      padding: 12px;
+      border-radius: 4px;
+      font-size: 13px;
+      font-weight: 700;
+      text-decoration: none;
+      transition: opacity 0.2s;
+    }
+
+    .plan-cta.primary {
+      background: var(--accent);
+      color: #0f0f0f;
+    }
+
+    .plan-cta.outline {
+      border: 1px solid var(--rule);
+      color: var(--ink);
+    }
+
+    .plan-cta:hover { opacity: 0.8; }
+
+    /* ===== BETA ===== */
+    .beta-section {
+      background: var(--surface);
+      text-align: center;
+    }
+
+    .beta-box {
+      max-width: 600px;
+      margin: 0 auto;
+      border: 1px solid var(--accent);
+      border-radius: 12px;
+      padding: 56px 40px;
+    }
+
+    .beta-box h2 {
+      font-size: clamp(22px, 3vw, 32px);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      margin-bottom: 16px;
+    }
+
+    .beta-box p {
+      color: var(--ink-muted);
+      margin-bottom: 36px;
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .beta-price {
+      display: inline-block;
+      background: rgba(200,169,126,0.12);
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      padding: 8px 24px;
+      border-radius: 4px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      margin-bottom: 32px;
+    }
+
+    /* ===== CONTACT ===== */
+    .contact-section { text-align: center; }
+
+    .contact-inner {
+      max-width: 560px;
+      margin: 0 auto;
+    }
+
+    .contact-inner p {
+      color: var(--ink-muted);
+      margin-bottom: 40px;
+      font-size: 14px;
+    }
+
+    .contact-methods {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .contact-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+      text-decoration: none;
+    }
+
+    .contact-item span {
+      font-size: 13px;
+      font-weight: 400;
+      color: var(--ink-muted);
+    }
+
+    /* ===== FOOTER ===== */
+    footer {
+      border-top: 1px solid var(--rule);
+      padding: 40px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: gap;
+      gap: 16px;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    .footer-logo {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--ink);
+      text-decoration: none;
+      letter-spacing: -0.02em;
+    }
+
+    .footer-logo span { color: var(--accent); }
+
+    .footer-links {
+      display: flex;
+      gap: 24px;
+    }
+
+    .footer-links a {
+      font-size: 12px;
+      color: var(--ink-muted);
+      text-decoration: none;
+    }
+
+    .footer-links a:hover { color: var(--ink); }
+
+    .footer-copy {
+      font-size: 12px;
+      color: var(--ink-muted);
+      width: 100%;
+      text-align: center;
+      padding-top: 24px;
+      border-top: 1px solid var(--rule);
+      margin-top: 24px;
+    }
+
+    @media (max-width: 640px) {
+      header { padding: 16px 20px; }
+      nav { gap: 16px; }
+      nav a:not(.nav-cta) { display: none; }
+      section { padding: 72px 20px; }
+      footer { flex-direction: column; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <a class="logo" href="#">SalonPost<span>Pro</span></a>
+  <nav>
+    <a href="#how">使い方</a>
+    <a href="#features">機能</a>
+    <a href="#pricing">料金</a>
+    <a href="#contact" class="nav-cta">お問い合わせ</a>
+  </nav>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-badge">β テスター募集中 — 初月無料</div>
+  <h1>写真を送るだけで<br><em>Instagram</em>が<br>勝手に動く。</h1>
+  <p class="hero-sub">美容師のためのInstagram自動投稿サービス。LINEで写真を送るだけで、AIがキャプションを生成して自動投稿。SNS運用の手間をゼロにします。</p>
+  <div class="hero-actions">
+    <a href="#pricing" class="btn-primary">プランを見る</a>
+    <a href="#how" class="btn-secondary">使い方を見る</a>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="how">
+  <p class="section-label">How it works</p>
+  <h2 class="section-title">3ステップで完結</h2>
+  <div class="steps">
+    <div class="step">
+      <p class="step-num">STEP 01</p>
+      <span class="step-icon">📱</span>
+      <h3>LINEで写真を送る</h3>
+      <p>施術後の写真や動画をLINEに送るだけ。アプリの追加インストールは不要です。</p>
+    </div>
+    <div class="step">
+      <p class="step-num">STEP 02</p>
+      <span class="step-icon">✨</span>
+      <h3>AIがキャプションを生成</h3>
+      <p>メニュー名を入力するとAIが250文字のキャプション＋ハッシュタグを自動生成。確認してOKを押すだけ。</p>
+    </div>
+    <div class="step">
+      <p class="step-num">STEP 03</p>
+      <span class="step-icon">🚀</span>
+      <h3>自動で投稿される</h3>
+      <p>朝・昼・夕のベストタイムに自動投稿。フィード・ストーリー・リール・カルーセル全対応。</p>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features" class="features-section">
+  <p class="section-label">Features</p>
+  <h2 class="section-title">主な機能</h2>
+  <div class="features-grid">
+    <div class="feature">
+      <span class="feature-icon">🤖</span>
+      <h3>AI自動キャプション生成</h3>
+      <p>メニュー（カラー・カット・パーマなど）に合わせて、毎回異なる文体でキャプションを自動生成します。</p>
+    </div>
+    <div class="feature">
+      <span class="feature-icon">⏰</span>
+      <h3>ベストタイム自動投稿</h3>
+      <p>平日は朝8時・昼12時・夕19時、土日は10時・18時に自動投稿。エンゲージメントの高い時間を狙います。</p>
+    </div>
+    <div class="feature">
+      <span class="feature-icon">📊</span>
+      <h3>月次レポート</h3>
+      <p>毎月、投稿実績・インサイト・改善提案をLINEで自動送信。データを元にした運用改善をサポートします。</p>
+    </div>
+    <div class="feature">
+      <span class="feature-icon">🖼️</span>
+      <h3>全投稿タイプ対応</h3>
+      <p>フィード（1枚）・カルーセル（複数枚）・ストーリーズ・リールに全対応。動画投稿もLINEから。</p>
+    </div>
+    <div class="feature">
+      <span class="feature-icon">🔄</span>
+      <h3>トークン自動更新</h3>
+      <p>Instagramのアクセストークンを自動で更新。設定後は完全放置でサービスが動き続けます。</p>
+    </div>
+    <div class="feature">
+      <span class="feature-icon">💬</span>
+      <h3>LINE完結の操作</h3>
+      <p>専用アプリは不要。普段使いのLINEだけで全操作が完結します。ITが苦手な方でも安心。</p>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section id="pricing">
+  <p class="section-label">Pricing</p>
+  <h2 class="section-title">料金プラン</h2>
+  <div class="pricing-grid">
+    <div class="plan">
+      <p class="plan-name">Lite</p>
+      <p class="plan-price">¥3,980<span>/月</span></p>
+      <p class="plan-desc">はじめての方に。基本機能をシンプルに。</p>
+      <ul class="plan-features">
+        <li>月20回まで自動投稿</li>
+        <li>AIキャプション生成</li>
+        <li>フィード・ストーリー対応</li>
+        <li>月次レポート</li>
+      </ul>
+      <a href="#contact" class="plan-cta outline">お問い合わせ</a>
+    </div>
+    <div class="plan featured">
+      <div class="plan-badge">人気</div>
+      <p class="plan-name">Standard</p>
+      <p class="plan-price">¥7,980<span>/月</span></p>
+      <p class="plan-desc">本格的に運用したい方に。全機能が使えます。</p>
+      <ul class="plan-features">
+        <li>月60回まで自動投稿</li>
+        <li>AIキャプション生成</li>
+        <li>全投稿タイプ対応</li>
+        <li>カルーセル・リール対応</li>
+        <li>月次レポート</li>
+      </ul>
+      <a href="#contact" class="plan-cta primary">お問い合わせ</a>
+    </div>
+    <div class="plan">
+      <p class="plan-name">Premium</p>
+      <p class="plan-price">¥14,800<span>/月</span></p>
+      <p class="plan-desc">投稿頻度を最大化したい方に。</p>
+      <ul class="plan-features">
+        <li>月無制限投稿</li>
+        <li>AIキャプション生成</li>
+        <li>全投稿タイプ対応</li>
+        <li>カルーセル・リール対応</li>
+        <li>月次レポート（詳細版）</li>
+        <li>優先サポート</li>
+      </ul>
+      <a href="#contact" class="plan-cta outline">お問い合わせ</a>
+    </div>
+  </div>
+</section>
+
+<!-- BETA -->
+<section class="beta-section">
+  <div class="beta-box">
+    <h2>βテスター募集中</h2>
+    <p>現在、初期ユーザーを限定募集しています。フィードバックをいただく代わりに、初月無料でご利用いただけます。</p>
+    <div class="beta-price">🎉 初月無料 — 今すぐ始める</div>
+    <br>
+    <a href="#contact" class="btn-primary">無料で試してみる</a>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact" class="contact-section">
+  <p class="section-label">Contact</p>
+  <h2 class="section-title">お問い合わせ</h2>
+  <div class="contact-inner">
+    <p>ご不明な点やご相談は、お気軽にご連絡ください。平日10:00〜18:00に対応しています。</p>
+    <div class="contact-methods">
+      <a class="contact-item" href="tel:08097320720">
+        📞 080-9732-0720
+        <span>（平日10〜18時）</span>
+      </a>
+      <a class="contact-item" href="mailto:y.yuto.0720@icloud.com">
+        ✉️ y.yuto.0720@icloud.com
+      </a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <a class="footer-logo" href="#">SalonPost<span>Pro</span></a>
+  <div class="footer-links">
+    <a href="privacy.html">プライバシーポリシー</a>
+    <a href="#contact">お問い合わせ</a>
+  </div>
+  <p class="footer-copy">&copy; 2026 さりぐデジタルワークス. All rights reserved.</p>
+</footer>
+
+</body>
+</html>
