@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SalonPostPro | 美容師のInstagram自動投稿</title>
+  <meta name="description" content="LINEで写真を送るだけ。AIがキャプションを生成してInstagramに自動投稿。美容師個人向けフリーミアムサービス。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f9f7f4;
+      --bg2: #f2ede8;
+      --surface: #ffffff;
+      --ink: #1c1916;
+      --ink-mid: #5a4e45;
+      --ink-soft: #9a8c82;
+      --gold: #b8914a;
+      --gold-light: #e8d5b0;
+      --rule: #e2d9cf;
+      --serif: 'Cormorant Garamond', 'Hiragino Mincho ProN', serif;
+      --sans: 'Noto Sans JP', 'Hiragino Sans', sans-serif;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--sans);
+      font-weight: 300;
+      font-size: 15px;
+      line-height: 1.9;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ===== HEADER ===== */
+    header {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      padding: 0 56px;
+      height: 72px;
+      display: flex; align-items: center; justify-content: space-between;
+      background: transparent;
+      transition: background 0.4s, border-color 0.4s;
+    }
+
+    header.scrolled {
+      background: rgba(249,247,244,0.96);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--rule);
+    }
+
+    .logo {
+      font-family: var(--serif);
+      font-size: 20px;
+      font-weight: 400;
+      letter-spacing: 0.06em;
+      color: #ffffff;
+      text-decoration: none;
+      transition: color 0.4s;
+    }
+
+    header.scrolled .logo { color: var(--ink); }
+
+    .logo-mark {
+      display: inline-block;
+      width: 5px; height: 5px;
+      background: var(--gold);
+      border-radius: 50%;
+      margin-left: 3px;
+      vertical-align: middle;
+      position: relative; top: -2px;
+    }
+
+    nav { display: flex; gap: 40px; align-items: center; }
+
+    nav a {
+      color: rgba(255,255,255,0.85);
+      text-decoration: none;
+      font-size: 12px;
+      letter-spacing: 0.1em;
+      font-weight: 400;
+      transition: color 0.25s;
+      text-transform: uppercase;
+    }
+
+    header.scrolled nav a { color: var(--ink-soft); }
+    nav a:hover { color: #ffffff; }
+    header.scrolled nav a:hover { color: var(--ink); }
+
+    .nav-cta {
+      border: 1px solid rgba(255,255,255,0.6) !important;
+      color: #ffffff !important;
+      padding: 9px 24px;
+      transition: background 0.25s, border-color 0.25s !important;
+    }
+
+    .nav-cta:hover {
+      background: rgba(255,255,255,0.15) !important;
+    }
+
+    header.scrolled .nav-cta {
+      border-color: var(--ink) !important;
+      color: var(--ink) !important;
+      background: transparent;
+    }
+
+    header.scrolled .nav-cta:hover {
+      background: var(--ink) !important;
+      color: var(--bg) !important;
+    }
+
+    /* ===== HERO ===== */
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-end;
+      padding: 0 80px 96px;
+      overflow: hidden;
+    }
+
+    .hero-bg {
+      position: absolute;
+      inset: 0;
+      background-image: url('hero-bg.png');
+      background-size: cover;
+      background-position: center top;
+      z-index: 0;
+    }
+
+    .hero-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        105deg,
+        rgba(20,16,14,0.72) 0%,
+        rgba(20,16,14,0.45) 45%,
+        rgba(20,16,14,0.08) 100%
+      );
+      z-index: 1;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      max-width: 560px;
+    }
+
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      color: var(--gold-light);
+      font-weight: 400;
+      margin-bottom: 28px;
+      text-transform: uppercase;
+    }
+
+    .hero-eyebrow::before {
+      content: '';
+      display: block;
+      width: 32px; height: 1px;
+      background: var(--gold);
+    }
+
+    .hero h1 {
+      font-family: var(--serif);
+      font-size: clamp(48px, 6vw, 80px);
+      font-weight: 300;
+      line-height: 1.15;
+      letter-spacing: -0.01em;
+      color: #ffffff;
+      margin-bottom: 28px;
+    }
+
+    .hero h1 em {
+      font-style: italic;
+      color: var(--gold-light);
+    }
+
+    .hero-sub {
+      font-size: 14px;
+      color: rgba(255,255,255,0.75);
+      line-height: 1.9;
+      margin-bottom: 48px;
+      font-weight: 300;
+      max-width: 420px;
+    }
+
+    .hero-actions { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
+
+    .btn-gold {
+      background: var(--gold);
+      color: #ffffff;
+      padding: 16px 40px;
+      font-family: var(--sans);
+      font-size: 12px;
+      font-weight: 400;
+      letter-spacing: 0.12em;
+      text-decoration: none;
+      text-transform: uppercase;
+      transition: opacity 0.25s;
+    }
+
+    .btn-gold:hover { opacity: 0.8; }
+
+    .btn-ghost {
+      border: 1px solid rgba(255,255,255,0.4);
+      color: rgba(255,255,255,0.85);
+      padding: 16px 40px;
+      font-size: 12px;
+      font-weight: 400;
+      letter-spacing: 0.12em;
+      text-decoration: none;
+      text-transform: uppercase;
+      transition: background 0.25s;
+    }
+
+    .btn-ghost:hover { background: rgba(255,255,255,0.1); }
+
+    .hero-scroll {
+      position: absolute;
+      bottom: 40px;
+      right: 80px;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .hero-scroll span {
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.5);
+      writing-mode: vertical-rl;
+    }
+
+    .scroll-line {
+      width: 1px;
+      height: 48px;
+      background: linear-gradient(to bottom, rgba(255,255,255,0.5), transparent);
+      animation: scrollLine 2s ease-in-out infinite;
+    }
+
+    @keyframes scrollLine {
+      0% { transform: scaleY(0); transform-origin: top; opacity: 0; }
+      50% { transform: scaleY(1); transform-origin: top; opacity: 1; }
+      100% { transform: scaleY(1); transform-origin: bottom; opacity: 0; }
+    }
+
+    /* ===== SECTIONS ===== */
+    .section-wrap { padding: 112px 80px; }
+    .section-wrap.alt { background: var(--bg2); }
+
+    .section-header { margin-bottom: 72px; }
+
+    .section-eyebrow {
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section-eyebrow::before {
+      content: '';
+      display: block;
+      width: 24px; height: 1px;
+      background: var(--gold);
+    }
+
+    .section-title {
+      font-family: var(--serif);
+      font-size: clamp(32px, 4vw, 52px);
+      font-weight: 300;
+      line-height: 1.2;
+      letter-spacing: -0.01em;
+      color: var(--ink);
+    }
+
+    /* ===== STEPS ===== */
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: var(--rule);
+      border: 1px solid var(--rule);
+    }
+
+    .step {
+      background: var(--bg);
+      padding: 48px 40px;
+    }
+
+    .step-num {
+      font-family: var(--serif);
+      font-size: 52px;
+      font-weight: 300;
+      color: var(--gold-light);
+      line-height: 1;
+      margin-bottom: 24px;
+    }
+
+    .step h3 { font-size: 15px; font-weight: 500; margin-bottom: 12px; letter-spacing: 0.02em; }
+    .step p { font-size: 13px; color: var(--ink-mid); line-height: 1.9; font-weight: 300; }
+
+    /* ===== FEATURES ===== */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 40px;
+    }
+
+    .feature { border-top: 1px solid var(--rule); padding-top: 28px; }
+
+    .feature-icon-wrap {
+      width: 36px; height: 36px;
+      border: 1px solid var(--rule);
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 20px;
+    }
+
+    .feature-icon-wrap svg { width: 16px; height: 16px; stroke: var(--gold); fill: none; stroke-width: 1.5; }
+    .feature h3 { font-size: 14px; font-weight: 500; margin-bottom: 10px; letter-spacing: 0.02em; }
+    .feature p { font-size: 13px; color: var(--ink-mid); line-height: 1.8; font-weight: 300; }
+
+    /* ===== PRICING ===== */
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      max-width: 760px;
+    }
+
+    .plan { padding: 48px 40px; background: var(--surface); border: 1px solid var(--rule); position: relative; }
+    .plan.featured { background: var(--ink); border-color: var(--ink); }
+
+    .plan-tag {
+      position: absolute;
+      top: -1px; right: 32px;
+      background: var(--gold);
+      color: var(--surface);
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 6px 14px;
+      font-weight: 400;
+    }
+
+    .plan-label { font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 24px; }
+    .plan.featured .plan-label { color: rgba(249,247,244,0.45); }
+
+    .plan-price { font-family: var(--serif); font-size: 52px; font-weight: 300; line-height: 1; color: var(--ink); margin-bottom: 6px; }
+    .plan.featured .plan-price { color: var(--bg); }
+
+    .plan-price sub { font-family: var(--sans); font-size: 14px; font-weight: 300; vertical-align: baseline; color: var(--ink-soft); }
+    .plan.featured .plan-price sub { color: rgba(249,247,244,0.45); }
+
+    .plan-desc { font-size: 12px; color: var(--ink-soft); margin-bottom: 36px; font-weight: 300; }
+    .plan.featured .plan-desc { color: rgba(249,247,244,0.5); }
+
+    .plan-divider { height: 1px; background: var(--rule); margin-bottom: 28px; }
+    .plan.featured .plan-divider { background: rgba(249,247,244,0.12); }
+
+    .plan-features { list-style: none; margin-bottom: 40px; }
+    .plan-features li { font-size: 13px; font-weight: 300; color: var(--ink-mid); padding: 9px 0; border-bottom: 1px solid var(--rule); display: flex; align-items: center; gap: 10px; }
+    .plan.featured .plan-features li { color: rgba(249,247,244,0.75); border-bottom-color: rgba(249,247,244,0.1); }
+    .plan-features li::before { content: ''; display: block; width: 4px; height: 4px; background: var(--gold); border-radius: 50%; flex-shrink: 0; }
+    .plan-features li.off::before { background: var(--rule); }
+    .plan-features li.off { color: var(--ink-soft); }
+    .plan.featured .plan-features li.off { color: rgba(249,247,244,0.2); }
+
+    .plan-cta { display: block; text-align: center; padding: 15px; font-family: var(--sans); font-size: 12px; font-weight: 400; letter-spacing: 0.1em; text-transform: uppercase; text-decoration: none; transition: opacity 0.25s; }
+    .plan-cta.outline { border: 1px solid var(--ink); color: var(--ink); }
+    .plan-cta.filled { background: var(--gold); color: var(--surface); }
+    .plan-cta:hover { opacity: 0.7; }
+
+    .pricing-note { margin-top: 28px; font-size: 12px; color: var(--ink-soft); font-weight: 300; }
+
+    /* ===== BETA ===== */
+    .beta-wrap {
+      padding: 0;
+      display: grid;
+      grid-template-columns: 1fr 480px;
+      min-height: 480px;
+    }
+
+    .beta-left {
+      background: var(--ink);
+      padding: 80px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .beta-left .section-eyebrow { color: var(--gold-light); }
+    .beta-left .section-eyebrow::before { background: var(--gold); }
+    .beta-left .section-title { color: var(--bg); margin-bottom: 24px; }
+    .beta-body { font-size: 14px; color: rgba(249,247,244,0.65); line-height: 1.9; font-weight: 300; }
+
+    .beta-right {
+      background: var(--gold);
+      padding: 80px 60px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .beta-price-tag { font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(255,255,255,0.65); margin-bottom: 16px; }
+    .beta-big { font-family: var(--serif); font-size: 52px; font-weight: 300; color: #ffffff; line-height: 1.2; margin-bottom: 12px; }
+    .beta-sub { font-size: 13px; color: rgba(255,255,255,0.7); margin-bottom: 40px; font-weight: 300; line-height: 1.8; }
+
+    .btn-white {
+      display: block;
+      text-align: center;
+      padding: 16px;
+      background: #ffffff;
+      color: var(--gold);
+      font-size: 12px;
+      font-weight: 400;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      text-decoration: none;
+      transition: opacity 0.25s;
+    }
+
+    .btn-white:hover { opacity: 0.85; }
+
+    /* ===== CONTACT ===== */
+    .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: start; }
+    .contact-left .section-title { margin-bottom: 24px; }
+    .contact-left p { font-size: 14px; color: var(--ink-mid); line-height: 1.9; font-weight: 300; }
+
+    .contact-items { display: flex; flex-direction: column; gap: 0; }
+
+    .contact-item { display: flex; align-items: center; gap: 20px; padding: 28px 0; border-bottom: 1px solid var(--rule); text-decoration: none; color: var(--ink); transition: opacity 0.25s; }
+    .contact-item:hover { opacity: 0.6; }
+    .contact-item:first-child { border-top: 1px solid var(--rule); }
+
+    .contact-icon { width: 40px; height: 40px; border: 1px solid var(--rule); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .contact-icon svg { width: 16px; height: 16px; stroke: var(--ink-mid); fill: none; stroke-width: 1.5; }
+
+    .contact-label { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 4px; }
+    .contact-value { font-size: 15px; font-weight: 400; color: var(--ink); }
+
+    /* ===== FOOTER ===== */
+    footer { padding: 40px 80px; border-top: 1px solid var(--rule); display: flex; align-items: center; justify-content: space-between; }
+    .footer-right { display: flex; gap: 32px; align-items: center; }
+    .footer-right a { font-size: 12px; color: var(--ink-soft); text-decoration: none; letter-spacing: 0.06em; transition: color 0.25s; }
+    .footer-right a:hover { color: var(--ink); }
+    .footer-copy { font-size: 11px; color: var(--ink-soft); letter-spacing: 0.04em; font-weight: 300; }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 960px) {
+      header { padding: 0 24px; }
+      nav a:not(.nav-cta) { display: none; }
+      .hero { padding: 0 32px 80px; }
+      .hero h1 { font-size: 48px; }
+      .hero-scroll { display: none; }
+      .section-wrap { padding: 80px 32px; }
+      .steps-grid { grid-template-columns: 1fr; }
+      .features-grid { grid-template-columns: 1fr 1fr; }
+      .pricing-grid { grid-template-columns: 1fr; max-width: 440px; }
+      .beta-wrap { grid-template-columns: 1fr; }
+      .beta-left { padding: 64px 32px; }
+      .beta-right { padding: 64px 32px; }
+      .contact-grid { grid-template-columns: 1fr; gap: 48px; }
+      footer { flex-direction: column; gap: 24px; padding: 40px 32px; text-align: center; }
+    }
+
+    @media (max-width: 640px) {
+      .features-grid { grid-template-columns: 1fr; }
+      .hero h1 { font-size: 38px; }
+    }
+  </style>
+</head>
+<body>
+
+<header id="site-header">
+  <a class="logo" href="#">SalonPostPro<span class="logo-mark"></span></a>
+  <nav>
+    <a href="#how">使い方</a>
+    <a href="#pricing">料金</a>
+    <a href="#contact" class="nav-cta">無料で始める</a>
+  </nav>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-overlay"></div>
+  <div class="hero-content">
+    <div class="hero-eyebrow">For Stylists</div>
+    <h1>SNSを、<br><em>もっと自由に。</em></h1>
+    <p class="hero-sub">美容師個人のためのInstagram自動投稿サービス。LINEで写真を送るだけで、AIがキャプションを生成して自動投稿します。</p>
+    <div class="hero-actions">
+      <a href="#pricing" class="btn-gold">無料で始める</a>
+      <a href="#how" class="btn-ghost">使い方を見る</a>
+    </div>
+  </div>
+  <div class="hero-scroll">
+    <div class="scroll-line"></div>
+    <span>Scroll</span>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<div class="section-wrap" id="how">
+  <div class="section-header">
+    <div class="section-eyebrow">How it works</div>
+    <h2 class="section-title">3ステップで<br>Instagram運用が完結する</h2>
+  </div>
+  <div class="steps-grid">
+    <div class="step">
+      <div class="step-num">01</div>
+      <h3>LINEで写真を送る</h3>
+      <p>施術後の写真や動画をLINEに送るだけ。専用アプリのインストールは一切不要です。普段使いのLINEから操作できます。</p>
+    </div>
+    <div class="step">
+      <div class="step-num">02</div>
+      <h3>AIがキャプションを生成</h3>
+      <p>メニュー名を入力すると、AIがキャプションとハッシュタグを自動生成。内容を確認してOKを送るだけで投稿予約が完了します。</p>
+    </div>
+    <div class="step">
+      <div class="step-num">03</div>
+      <h3>最適な時間に自動投稿</h3>
+      <p>平日朝・昼・夜、土日も設定済みのベストタイムに自動投稿。フィード・ストーリー・リール・カルーセルすべてに対応しています。</p>
+    </div>
+  </div>
+</div>
+
+<!-- FEATURES -->
+<div class="section-wrap alt">
+  <div class="section-header">
+    <div class="section-eyebrow">Features</div>
+    <h2 class="section-title">美容師の集客を<br>自動化する機能</h2>
+  </div>
+  <div class="features-grid">
+    <div class="feature">
+      <div class="feature-icon-wrap">
+        <svg viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg>
+      </div>
+      <h3>メニュー別AIキャプション</h3>
+      <p>カット・カラー・パーマ・縮毛矯正など施術内容に応じた、毎回異なる自然なキャプションを自動生成します。</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon-wrap">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+      </div>
+      <h3>ベストタイム自動投稿</h3>
+      <p>平日8時・12時・19時、土日10時・18時の最もエンゲージメントが高い時間帯に自動で投稿されます。</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon-wrap">
+        <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      </div>
+      <h3>予約導線の自動挿入</h3>
+      <p>ホットペッパービューティーなどの予約リンクをキャプションに自動挿入。集客につながる投稿を作れます。</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon-wrap">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+      </div>
+      <h3>全投稿フォーマット対応</h3>
+      <p>フィード・カルーセル・ストーリーズ・リールすべてに対応。写真も動画もLINEから一元管理できます。</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon-wrap">
+        <svg viewBox="0 0 24 24"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+      </div>
+      <h3>月次分析レポート</h3>
+      <p>毎月の投稿実績・インサイト・AIによる改善提案をLINEで自動送信。データに基づいた運用をサポートします。</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon-wrap">
+        <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
+      <h3>トークン自動更新</h3>
+      <p>Instagramのアクセストークンを自動で更新し続けます。一度設定すれば、完全放置で動き続けます。</p>
+    </div>
+  </div>
+</div>
+
+<!-- PRICING -->
+<div class="section-wrap" id="pricing">
+  <div class="section-header">
+    <div class="section-eyebrow">Pricing</div>
+    <h2 class="section-title">まずは無料で、<br>本格的に使うならPro</h2>
+  </div>
+  <div class="pricing-grid">
+    <div class="plan">
+      <div class="plan-label">Free</div>
+      <div class="plan-price">¥0<sub>/月</sub></div>
+      <div class="plan-desc">始める敷居をゼロに。</div>
+      <div class="plan-divider"></div>
+      <ul class="plan-features">
+        <li>月5回まで投稿生成</li>
+        <li>AIキャプション生成（基本）</li>
+        <li>投稿プレビュー・確認</li>
+        <li>Instagramアカウント1件連携</li>
+        <li class="off">予約投稿（自動スケジュール）</li>
+        <li class="off">複数パターン再生成</li>
+        <li class="off">予約導線の自動挿入</li>
+        <li class="off">月次分析レポート</li>
+      </ul>
+      <a href="#contact" class="plan-cta outline">無料で始める</a>
+    </div>
+    <div class="plan featured">
+      <div class="plan-tag">おすすめ</div>
+      <div class="plan-label">Pro</div>
+      <div class="plan-price">¥1,980<sub>/月</sub></div>
+      <div class="plan-desc">Instagram集客を本格化したい方に。</div>
+      <div class="plan-divider"></div>
+      <ul class="plan-features">
+        <li>投稿生成 無制限</li>
+        <li>AIキャプション生成（高精度）</li>
+        <li>投稿プレビュー・確認</li>
+        <li>Instagramアカウント1件連携</li>
+        <li>予約投稿（自動スケジュール）</li>
+        <li>複数パターン再生成</li>
+        <li>予約導線の自動挿入</li>
+        <li>月次分析レポート</li>
+      </ul>
+      <a href="#contact" class="plan-cta filled">7日間無料で試す</a>
+    </div>
+  </div>
+  <p class="pricing-note">クレジットカード不要で無料プランを開始できます。プランはいつでも変更可能です。</p>
+</div>
+
+<!-- BETA -->
+<div class="beta-wrap">
+  <div class="beta-left">
+    <div class="section-eyebrow">Beta</div>
+    <h2 class="section-title">βテスター<br>限定募集中</h2>
+    <p class="beta-body">現在、初期ユーザーを限定募集しています。サービスへのフィードバックをいただく代わりに、Proプランを初月完全無料でご利用いただけます。<br><br>美容師として独立したばかりの方、SNS運用に悩んでいる方のご参加をお待ちしています。</p>
+  </div>
+  <div class="beta-right">
+    <div class="beta-price-tag">βテスター特典</div>
+    <div class="beta-big">初月<br>完全無料</div>
+    <div class="beta-sub">Proプラン（通常¥1,980/月）を初月無料でご利用いただけます。</div>
+    <a href="#contact" class="btn-white">応募する</a>
+  </div>
+</div>
+
+<!-- CONTACT -->
+<div class="section-wrap" id="contact">
+  <div class="contact-grid">
+    <div class="contact-left">
+      <div class="section-eyebrow">Contact</div>
+      <h2 class="section-title">お問い合わせ</h2>
+      <p>サービスへのご質問、βテスターへのご応募、ご相談はお気軽にご連絡ください。平日10:00〜18:00に対応しています。</p>
+    </div>
+    <div class="contact-items">
+      <a class="contact-item" href="tel:08097320720">
+        <div class="contact-icon">
+          <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.56a16 16 0 0 0 6.29 6.29l1.42-1.42a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        </div>
+        <div>
+          <div class="contact-label">電話</div>
+          <div class="contact-value">080-9732-0720</div>
+        </div>
+      </a>
+      <a class="contact-item" href="mailto:y.yuto.0720@icloud.com">
+        <div class="contact-icon">
+          <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        </div>
+        <div>
+          <div class="contact-label">メール</div>
+          <div class="contact-value">y.yuto.0720@icloud.com</div>
+        </div>
+      </a>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <a class="logo" href="#" style="color: var(--ink);">SalonPostPro<span class="logo-mark"></span></a>
+  <div class="footer-right">
+    <a href="privacy.html">プライバシーポリシー</a>
+    <span class="footer-copy">&copy; 2026 さりぐデジタルワークス</span>
+  </div>
+</footer>
+
+<script>
+  const header = document.getElementById('site-header');
+  window.addEventListener('scroll', () => {
+    if (window.scrollY > 40) {
+      header.classList.add('scrolled');
+    } else {
+      header.classList.remove('scrolled');
+    }
+  });
+</script>
+
+</body>
+</html>
